@@ -1,7 +1,6 @@
 # ALON
 
-Alon means "wave" in Tagalog, one of the over 170 languages spoken by Filipinos. Their ancestors were seafarers. But they did not tame the waves, for nature
-cannot be subdued. They learned the language of the waves, and the waves learned theirs.
+Alon means "wave" in Tagalog, one of the over 170 languages spoken by Filipinos. Their ancestors were seafarers, who mastered navigating turbulent waters. But they did not tame the waves, for nature cannot be subdued. They learned the language of the waves, and the waves learned theirs.
 
 #
 
