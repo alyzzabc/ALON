@@ -1,0 +1,26 @@
+R version 4.4.1 (2024-06-14)
+Platform: x86_64-pc-linux-gnu
+Running under: Rocky Linux 8.6 (Green Obsidian)
+
+Matrix products: default
+BLAS:   /gxfs_home/sw/spack/spack0.20.1/usr/opt/spack/linux-rocky8-x86_64/gcc-12.3.0/r-4.4.1-ejaaa4zhpcf7yfhe5mjpfyhfztr2xufk/rlib/R/lib/libRblas.so 
+LAPACK: /gxfs_home/sw/spack/spack0.20.1/usr/opt/spack/linux-rocky8-x86_64/gcc-12.3.0/r-4.4.1-ejaaa4zhpcf7yfhe5mjpfyhfztr2xufk/rlib/R/lib/libRlapack.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+ [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+ [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+
+time zone: Europe/Berlin
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] fst_0.9.8         mgcv_1.9-3        nlme_3.1-167      data.table_1.17.8
+
+loaded via a namespace (and not attached):
+[1] compiler_4.4.1 Matrix_1.7-3   parallel_4.4.1 Rcpp_1.0.14    splines_4.4.1 
+[6] grid_4.4.1     fstcore_0.10.0 lattice_0.22-6
