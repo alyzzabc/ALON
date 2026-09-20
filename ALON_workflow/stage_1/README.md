@@ -110,5 +110,6 @@ After each array task finishes its chunk, it checks whether all expected chunks 
 
 A merge lock prevents multiple array tasks from performing the final merge simultaneously.
 
-**Test data**
+**Test data:**
+
 The eukaryotic all-fraction dataset `stage_1/test_input/input_euks.tsv` is used to test the full Stage 1 to Stage 2 workflow on a smaller input dataset. 
