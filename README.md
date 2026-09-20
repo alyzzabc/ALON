@@ -70,7 +70,7 @@ For each taxon:
 CHUNK=2000
 ENGINE=gam
 K=12
-LATTRIM=-90
+LATMINTRAIN=-90
 GAMMA=1
 CAPQ=0.995
 FAMILY=gaussian_log1p
@@ -101,7 +101,7 @@ OUT=path/to/output/directory
 CHUNK=2000 
 ENGINE=gam
 K=12
-LATTRIM=-90
+LATMINTRAIN=-90
 GAMMA=1
 CAPQ=0.995
 FAMILY=gaussian_log1p
