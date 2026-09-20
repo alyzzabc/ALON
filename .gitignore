@@ -1,7 +1,5 @@
 
 # Large test/data files
-ALON_workflow/stage_1/test_output/predictions_all.tsv
-ALON_workflow/stage_2/test_input/all_fractions_combined/predictions_all.tsv
 ALON_workflow/stage_2/test_input/size_fraction_reconciliation/observations_VIRUS.tsv
 ALON_workflow/stage_2/test_input/size_fraction_reconciliation/observations_CELLULAR.tsv
 ALON_workflow/stage_2/test_input/size_fraction_reconciliation/observations_ALL.tsv
