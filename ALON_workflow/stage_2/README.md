@@ -64,24 +64,24 @@ Output files
 Usage:
 
 Rscript run_biogeography.R \
-  --pred_input gam_predictions_ALL_first100.tsv \
-  --obs_input observations_ALL.tsv \
+  --pred_input predictions_all.tsv \
+  --obs_input input_euks_small.tsv \
   --output_dir output \
   --script_dir /path/to/scripts
 
 Or provide own config file:
 
 Rscript run_biogeography.R \
-  --pred_input gam_predictions_ALL_first100.tsv \
-  --obs_input observations_ALL.tsv \
+  --pred_input predictions_all.tsv \
+  --obs_input input_euks_small.tsv \
   --output_dir output \
   --config_file config_file.tsv \
   --script_dir /path/to/scripts
 
 Or run multiple fractions:
-  --pred_input gam_predictions_ALL_first100.tsv,gam_predictions_CELLULAR_first100.tsv,gam_predictions_VIR_first100.tsv \
-  --obs_input observations_ALL.tsv,observations_CELLULAR.tsv,observations_VIR.tsv \
-  --reference_obs_input observations_ALL.tsv \
+  --pred_input gam_predictions_ALL_first100.tsv,gam_predictions_CELLULAR_first100.tsv,gam_predictions_VIRUS_first100.tsv \
+  --obs_input observations_ALL_first100.tsv,observations_CELLULAR_first100.tsv,observations_VIRUS_first100.tsv \
+  --reference_obs_input observations_ALL_first100.tsv \
   --output_dir output \
   --script_dir /path/to/scripts
 
