@@ -85,5 +85,6 @@ Or run multiple fractions:
   --output_dir output \
   --script_dir /path/to/scripts
 
-**Test data**
+**Test data:**
+
 The eukaryotic all-fraction inputs in `stage_2/test_input/all_fractions_combined/` are the same as the Stage 1 input and output. A separate multiple-fraction dataset, including all fractions combined, cellular fraction, and viral fraction, is provided in `stage_2/test_input/size_fraction_reconciliation/` to test size fraction reconciliation. 
