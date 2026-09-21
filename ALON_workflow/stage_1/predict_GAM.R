@@ -14,7 +14,7 @@ if (length(args) < 2) {
     "Usage:",
     "general_final_predict_gam.R <input.tsv> <outdir>",
     "[chunk_size] [engine] [k_spline] [lat_min_train]",
-    "[gamma] [cap_quant] [family_mode]",
+    "[gamma] [cap_quant] [family_mode] [min_detections]",
     sep = "\n  "
   ))
 }
@@ -30,6 +30,11 @@ lat_min_train    <- if (length(args) >= 6 && nzchar(args[[6]])) as.numeric(args[
 gamma_in         <- if (length(args) >= 7 && nzchar(args[[7]])) as.numeric(args[[7]]) else 1.2
 cap_quant_in     <- if (length(args) >= 8 && nzchar(args[[8]])) as.numeric(args[[8]]) else 0.995
 family_mode <- if (length(args) >= 9 && nzchar(args[[9]])) args[[9]] else "gaussian_log1p"
+min_detections <- if (length(args) >= 10 && nzchar(args[[10]])) {
+  as.integer(args[[10]])
+} else {
+  1L
+}
 
 family_mode <- tolower(family_mode)
 if (!family_mode %in% c("gaussian_log1p", "tweedie")) {
@@ -57,6 +62,11 @@ if (slurm_mode) {
 }
 
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+
+message(sprintf(
+  "Minimum detections required: %d",
+  min_detections
+))
 
 message(sprintf(
   "Settings: family_mode=%s • engine=%s • k_spline=%d • chunk_size=%d",
@@ -93,6 +103,22 @@ setkey(samples_lat, sample_name)
 # per (sample_name,taxon_id) norm_coverage — keep max
 wrk_tbl <- epi[, .(norm_coverage = max(norm_coverage, na.rm = TRUE)), by = .(sample_name, taxon_id)]
 setkey(wrk_tbl, sample_name, taxon_id)
+
+# discard taxa with less than 5 detections
+det_counts <- wrk_tbl[
+  norm_coverage > 0,
+  .(n_detections = uniqueN(sample_name)),
+  by = taxon_id
+]
+
+keep_taxa <- det_counts[
+  n_detections >= min_detections,
+  taxon_id
+]
+
+wrk_tbl <- wrk_tbl[taxon_id %in% keep_taxa]
+
+uniq_taxa <- sort(unique(wrk_tbl$taxon_id))
 
 uniq_taxa <- sort(unique(wrk_tbl$taxon_id))
 n_total   <- length(uniq_taxa)
@@ -142,6 +168,26 @@ predict_one <- function(taxon,
                         gamma_val   = 1.2,
                         family_mode = "gaussian_log1p") {
 
+  # Number of real positive detections for this taxon
+  n_detect <- wrk_tbl[
+    taxon_id == taxon & norm_coverage > 0,
+    uniqueN(sample_name)
+  ]
+  
+  if (n_detect < min_detections) {
+    return(data.table(
+      taxon_id = taxon,
+      latitude = seq(-90, 90, by = grid_by),
+      fit = 0, lo = 0, hi = 0,
+      status = "insufficient_detections",
+      engine = engine,
+      family_mode = family_mode,
+      k_spline = k_spline,
+      gamma = gamma_val,
+      lat_min_train = lat_min_train
+    ))
+  }
+  
   # Join norm_coverage for this taxon_id to every sample_name/latitude (fills zeros for non-detections)
   xdt <- merge(samples_lat, wrk_tbl[.(unique(samples_lat$sample_name), taxon)],
                by = "sample_name", all.x = TRUE, allow.cartesian = TRUE)
@@ -235,10 +281,7 @@ predict_one <- function(taxon,
   k_use <- max(3L, min(k_spline, n_ux - 1L))
   form  <- as.formula(sprintf("y ~ s(x, k = %d)", k_use))
   m <- try(fit_model(form, train), silent = TRUE)
-  if (inherits(m, "try-error")) {
-    fit_ok <- FALSE
-    }
-
+  
   newd <- data.table(latitude = newx, x = newx)
 
   if (!fit_ok) {
