@@ -18,8 +18,6 @@ Note: Stage 1 can be skipped if users prefer to model per-latitude abundance ind
 
 For each `taxon_id`, normalized abundance (`norm_coverage`) across samples is modeled as a function of latitude. Predictions are generated from -90° to 90° latitude at 1° intervals.
 
-Recommended pre-processing: Taxa should be filtered to the desired minimum number of detections before running this script. In our analysis, taxa were required to have at least five non-zero detections before GAM fitting.
-
 The script can run either:
 - on a SLURM high-performance computing cluster using an array job, or
 - locally without SLURM, in which case all chunks are processed sequentially.
@@ -28,7 +26,6 @@ The script can run either:
 - data.table
 - mgcv
 - fst
-
 
 Optional:
 -  `RhpcBLASctl` - used for thread control when available but is not required
@@ -60,21 +57,11 @@ For each taxon:
 | `chunk_size` | 2000 | Number of unique `taxon_id`s processed per chunk |
 | `engine` | `gam` | GAM fitting engine (`gam` or `bam` for Gaussian models) |
 | `k_spline` | 12 | Maximum basis dimension for the latitude smooth |
-| `lat_min_train` | -90 | Minimum latitude included when fitting the model |
+| `lat_min_train` | -90 | Southern latitude cutoff below which observed samples are excluded from fitting |
 | `gamma` | 1 | GAM smoothing penalty multiplier |
 | `cap_quant` | 0.995 | Quantile used to cap positive coverage values |
 | `family` | `gaussian_log1p` | Model family: `gaussian_log1p` or `tweedie` |
-
-### Default configuration:
-```md
-CHUNK=2000
-ENGINE=gam
-K=12
-LATMINTRAIN=-90
-GAMMA=1
-CAPQ=0.995
-FAMILY=gaussian_log1p
-```
+|`min_detections`| 1 | Minimum number of positive detections per taxon required for GAM fitting |
 
 ### Output files:
 1. Intermediate prediction chunks: `pred_chunk_0001.fst`, `pred_chunk_0002.fst`
@@ -96,16 +83,6 @@ Status values:
 
 ### Usage:
 ```bash
-IN=path/to/input.tsv
-OUT=path/to/output/directory
-CHUNK=2000 
-ENGINE=gam
-K=12
-LATMINTRAIN=-90
-GAMMA=1
-CAPQ=0.995
-FAMILY=gaussian_log1p
-
 Rscript predict_gam.R \
   "path/to/input.tsv" \
   "path/to/output/directory" \
@@ -115,7 +92,8 @@ Rscript predict_gam.R \
   "-90" \
   "1" \
   "0.995" \
-  "gaussian_log1p"
+  "gaussian_log1p" \
+  "1"
 ```
 
 #### Local execution
@@ -129,7 +107,7 @@ After each array task finishes its chunk, it checks whether all expected chunks 
 A merge lock prevents multiple array tasks from performing the final merge simultaneously.
 
 ### Test data:
-The eukaryotic all-fraction dataset `stage_1/test_input/input_euks.tsv` is used to test the full Stage 1 to Stage 2 workflow on a smaller input dataset. 
+The eukaryotic all-fraction dataset `stage_1/test_input/input_euks_small.tsv` is used to test the full Stage 1 to Stage 2 workflow on a smaller input dataset. 
 
 #
 
