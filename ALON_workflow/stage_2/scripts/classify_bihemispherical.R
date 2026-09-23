@@ -22,6 +22,22 @@ suppressPackageStartupMessages({
 })
 
 ## ============================================================
+## 0. Set latzone cutoffs
+## ============================================================
+
+if (!exists("latzone_cutoffs")) {
+  latzone_cutoffs <- list(
+    tropical = 15,
+    subpolar = 45,
+    polar = 60
+  )
+}
+
+tropical_cutoff <- latzone_cutoffs$tropical
+subpolar_cutoff <- latzone_cutoffs$subpolar
+polar_cutoff <- latzone_cutoffs$polar
+
+## ============================================================
 ## 1. Check required objects
 ## ============================================================
 
@@ -250,16 +266,26 @@ stopifnot("latitude" %chin% names(top2_hemi))
 ## ============================================================
 
 top2_hemi[, big_zone := fcase(
-  abs(latitude) < 15,                        "tropical",
+  abs(latitude) < tropical_cutoff,
+  "tropical",
   
-  latitude >= 15 & latitude < 45,            "north_subtropical",
-  latitude <= -15 & latitude > -45,          "south_subtropical",
+  latitude >= tropical_cutoff & latitude < subpolar_cutoff,
+  "north_subtropical",
   
-  latitude >= 45 & latitude < 60,            "north_subpolar",
-  latitude <= -45 & latitude > -60,          "south_subpolar",
+  latitude <= -tropical_cutoff & latitude > -subpolar_cutoff,
+  "south_subtropical",
   
-  latitude >= 60,                            "north_polar",
-  latitude <= -60,                           "south_polar",
+  latitude >= subpolar_cutoff & latitude < polar_cutoff,
+  "north_subpolar",
+  
+  latitude <= -subpolar_cutoff & latitude > -polar_cutoff,
+  "south_subpolar",
+  
+  latitude >= polar_cutoff,
+  "north_polar",
+  
+  latitude <= -polar_cutoff,
+  "south_polar",
   
   default = NA_character_
 )]

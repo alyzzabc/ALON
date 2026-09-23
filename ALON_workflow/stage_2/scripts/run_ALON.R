@@ -127,6 +127,84 @@ base_output_dir <- opt$output_dir
 config_file <- opt$config_file
 script_dir <- opt$script_dir
 
+## default latitudinal cutoffs
+latzone_cutoffs <- list(
+  tropical = 15,
+  subpolar = 45,
+  polar = 60
+)
+
+## allow config file to override defaults
+if (!is.null(config_file)) {
+  config_dt <- data.table::fread(config_file)
+  
+  if (!all(c("parameter", "value") %in% names(config_dt))) {
+    stop(
+      "Config file must contain columns: parameter, value",
+      call. = FALSE
+    )
+  }
+  
+  get_config_value <- function(parameter_name, default_value) {
+    value <- config_dt[parameter == parameter_name, value]
+    
+    if (length(value) == 0L) {
+      return(default_value)
+    }
+    
+    if (length(value) > 1L) {
+      stop(
+        "Config parameter appears more than once: ",
+        parameter_name,
+        call. = FALSE
+      )
+    }
+    
+    as.numeric(value)
+  }
+  
+  latzone_cutoffs$tropical <- get_config_value(
+    "tropical_cutoff",
+    latzone_cutoffs$tropical
+  )
+  
+  latzone_cutoffs$subpolar <- get_config_value(
+    "subpolar_cutoff",
+    latzone_cutoffs$subpolar
+  )
+  
+  latzone_cutoffs$polar <- get_config_value(
+    "polar_cutoff",
+    latzone_cutoffs$polar
+  )
+}
+
+## validate cutoffs
+if (any(is.na(unlist(latzone_cutoffs)))) {
+  stop(
+    "Latitudinal cutoffs must be numeric.",
+    call. = FALSE
+  )
+}
+
+if (!(latzone_cutoffs$tropical < latzone_cutoffs$subpolar &&
+      latzone_cutoffs$subpolar < latzone_cutoffs$polar)) {
+  stop(
+    "Latitudinal cutoffs must satisfy: ",
+    "tropical_cutoff < subpolar_cutoff < polar_cutoff.",
+    call. = FALSE
+  )
+}
+
+message(
+  "Latitudinal cutoffs: tropical/equatorial < ",
+  latzone_cutoffs$tropical,
+  ", subpolar/high-latitude >= ",
+  latzone_cutoffs$subpolar,
+  ", polar >= ",
+  latzone_cutoffs$polar
+)
+
 if (!is.null(config_file) && !file.exists(config_file)) {
   stop("Config file does not exist: ", config_file, call. = FALSE)
 }

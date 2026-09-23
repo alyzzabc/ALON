@@ -146,10 +146,15 @@ During the final reconciliation step, consensus geographic assignments are deriv
 ***Optional:*** Config can be provided by the user. Default config has been validated for abundance prediction using GAM.
 | Parameter | Default | Description |
 |---|---|---|
-|`min_support`|2|minimum number of actual detections (norm_coverage > 0) required to support a peak
-|`min_rel_height`|0.5|minimum relative height of a secondary peak compared with the tallest peak for the same taxon
-|`min_abs_fit`|0.005|minimum absolute fitted abundance value required for a peak to be considered real
-|`min_sep_deg`|5|minimum distance in latitudinal degrees used when deciding whether nearby peaks should be merged
+|`min_support`|2|minimum number of actual detections (norm_coverage > 0) required to support a peak |
+|`min_rel_height`|0.5|minimum relative height of a secondary peak compared with the tallest peak for the same taxon |
+|`min_abs_fit`|0.005|minimum absolute fitted abundance value required for a peak to be considered real |
+|`min_sep_deg`|5|minimum distance in latitudinal degrees used when deciding whether nearby peaks should be merged |
+|`tropical_cutoff`|15|absolute latitude below which observations are considered tropical/equatorial |
+|`subpolar_cutoff`|45|absolute latitude below at which subpolar/high latitude zones begin |
+|`polar_cutoff`|60|absolute latitude at which polar zones begin  |
+
+Latitudinal cutoffs must satisfy `tropical_cutoff` < `subpolar_cutoff` < `polar_cutoff`. By default, ALON uses 15°, 45°, and 60° absolute latitude.
 
 
 Example of optional tab-separated file with columns `parameter` and `value`:
@@ -160,6 +165,9 @@ min_support	2
 min_rel_height	0.5
 min_abs_fit	0.005
 min_sep_deg	5
+tropical_cutoff 15
+subpolar_cutoff 45
+polar_cutoff 60
 ```
 
 ### Output files
@@ -205,6 +213,7 @@ Or run multiple fractions:
 Rscript run_ALON.R \
   --pred_input gam_predictions_ALL_first100.tsv,gam_predictions_CELLULAR_first100.tsv,gam_predictions_VIRUS_first100.tsv \
   --obs_input observations_ALL_first100.tsv,observations_CELLULAR_first100.tsv,observations_VIRUS_first100.tsv \
+  --size_fraction ALL,CELLULAR,VIRUS \
   --reference_obs_input observations_ALL_first100.tsv \
   --output_dir output \
   --script_dir /path/to/scripts

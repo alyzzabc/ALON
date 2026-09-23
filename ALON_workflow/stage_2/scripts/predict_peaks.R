@@ -24,7 +24,10 @@ default_config <- list(
   min_support    = 2,
   min_rel_height = 0.5,
   min_abs_fit    = 0.005,
-  min_sep_deg    = 5
+  min_sep_deg    = 5,
+  tropical_cutoff  = 15,
+  subpolar_cutoff  = 45,
+  polar_cutoff     = 60
 )
 
 config <- default_config
@@ -50,6 +53,22 @@ if (exists("config_file") && !is.null(config_file) && file.exists(config_file)) 
 
   config[names(config_from_file)] <- config_from_file
 }
+
+# Validate latitude cutoffs after defaults/config are finalized
+if (!(config$tropical_cutoff < config$subpolar_cutoff &&
+      config$subpolar_cutoff < config$polar_cutoff)) {
+  stop(
+    "Latitudinal cutoffs must satisfy: ",
+    "tropical_cutoff < subpolar_cutoff < polar_cutoff.",
+    call. = FALSE
+  )
+}
+
+latzone_cutoffs <- list(
+  tropical = config$tropical_cutoff,
+  subpolar = config$subpolar_cutoff,
+  polar = config$polar_cutoff
+)
 
 message("Using config:")
 print(config)
@@ -156,10 +175,11 @@ pred_with_support[is.na(n_pos), n_pos := 0L]
 ## ============================================================
 ## 6. Assign zones: north, south, equatorial
 ## ============================================================
+equatorial_cutoff <- config$tropical_cutoff
 
 pred_with_support[, zone := fifelse(
-  latitude >= 15, "north",
-  fifelse(latitude <= -15, "south", "equatorial")
+  latitude >= equatorial_cutoff, "north",
+  fifelse(latitude <= -equatorial_cutoff, "south", "equatorial")
 )]
 
 ## ==================================================================

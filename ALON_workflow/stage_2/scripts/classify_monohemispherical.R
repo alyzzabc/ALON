@@ -18,6 +18,22 @@ suppressPackageStartupMessages({
 })
 
 ## ============================================================
+## 0. Set latzone cutoffs
+## ============================================================
+
+if (!exists("latzone_cutoffs")) {
+  latzone_cutoffs <- list(
+    tropical = 15,
+    subpolar = 45,
+    polar = 60
+  )
+}
+
+tropical_cutoff <- latzone_cutoffs$tropical
+subpolar_cutoff <- latzone_cutoffs$subpolar
+polar_cutoff <- latzone_cutoffs$polar
+
+## ============================================================
 ## 1. Check required objects
 ## ============================================================
 
@@ -183,14 +199,14 @@ make_mono_tags <- function(peaks_dt,
   unclassified_ids <- as.character(unclassified_ids)
   
   zone_of <- function(lat) {
-    a <- abs(lat)
-    fcase(
-      a < 15, "tropical",
-      a < 45, "subtropical",
-      a < 60, "subpolar",
-      default = "polar"
-    )
-  }
+  a <- abs(lat)
+  fcase(
+    a < tropical_cutoff, "tropical",
+    a < subpolar_cutoff, "subtropical",
+    a < polar_cutoff, "subpolar",
+    default = "polar"
+  )
+}
   
   ## 1. Keep only still-unclassified IDs
   peaks <- peaks[get(id_col) %in% unclassified_ids]

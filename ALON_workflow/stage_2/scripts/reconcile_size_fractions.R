@@ -143,6 +143,32 @@ if (!exists("map_bihem_polar_to_bipolar")) {
   map_bihem_polar_to_bipolar <- FALSE
 }
 
+if (!exists("latzone_cutoffs")) {
+  latzone_cutoffs <- list(
+    tropical = 15,
+    subpolar = 45,
+    polar = 60
+  )
+}
+
+tropical_cutoff <- latzone_cutoffs$tropical
+subpolar_cutoff <- latzone_cutoffs$subpolar
+polar_cutoff <- latzone_cutoffs$polar
+
+if (!(tropical_cutoff < subpolar_cutoff && subpolar_cutoff < polar_cutoff)) {
+  stop(
+    "Latitudinal cutoffs must satisfy: tropical_cutoff < subpolar_cutoff < polar_cutoff.",
+    call. = FALSE
+  )
+}
+
+message(
+  "Recomputing reconciled exclusivity using latitudinal cutoffs: ",
+  "tropical < ", tropical_cutoff,
+  ", subpolar >= ", subpolar_cutoff,
+  ", polar >= ", polar_cutoff
+)
+
 discordant_label <- "discordant"
 
 message("Reconciliation rule: ", reconciliation_rule)
@@ -511,15 +537,14 @@ collapse_size_fraction_tags <- function(dt,
 
 inside_bihem_band <- function(final_geo, lat) {
   a <- abs(lat)
-  
   switch(
     final_geo,
-    bipolar       = a >= 60,
-    polar         = a >= 60,
-    subpolar      = a >= 45 & a < 60,
-    subtropical   = a >= 15 & a < 45,
-    high_latitude = a >= 45,
-    tropical      = a < 15,
+    bipolar       = a >= polar_cutoff,
+    polar         = a >= polar_cutoff,
+    subpolar      = a >= subpolar_cutoff & a < polar_cutoff,
+    subtropical   = a >= tropical_cutoff & a < subpolar_cutoff,
+    high_latitude = a >= subpolar_cutoff,
+    tropical      = a < tropical_cutoff,
     rep(FALSE, length(lat))
   )
 }
@@ -666,7 +691,7 @@ inside_mono_band <- function(final_geo, lat) {
     polar         = a >= 60,
     high_latitude = a >= 45,
     rep(FALSE, length(lat))
-  )
+)
   
   hemi_ok & band_ok
 }
