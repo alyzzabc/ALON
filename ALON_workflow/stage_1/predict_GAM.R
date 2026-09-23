@@ -14,7 +14,8 @@ if (length(args) < 2) {
     "Usage:",
     "general_final_predict_gam.R <input.tsv> <outdir>",
     "[chunk_size] [engine] [k_spline] [lat_min_train]",
-    "[gamma] [cap_quant] [family_mode] [min_detections]",
+    "[lat_min_pred] [gamma] [cap_quant] [family_mode]",
+    "[min_detections]",
     sep = "\n  "
   ))
 }
@@ -26,12 +27,18 @@ engine         <- if (length(args) >= 4  && nzchar(args[[4 ]])) args[[4]] else "
 k_spline_in    <- if (length(args) >= 5  && nzchar(args[[5 ]])) as.integer(args[[5 ]]) else 12
 
 # refit-tuning knobs
-lat_min_train    <- if (length(args) >= 6 && nzchar(args[[6]])) as.numeric(args[[6]]) else -76
-gamma_in         <- if (length(args) >= 7 && nzchar(args[[7]])) as.numeric(args[[7]]) else 1.2
-cap_quant_in     <- if (length(args) >= 8 && nzchar(args[[8]])) as.numeric(args[[8]]) else 0.995
-family_mode <- if (length(args) >= 9 && nzchar(args[[9]])) args[[9]] else "gaussian_log1p"
-min_detections <- if (length(args) >= 10 && nzchar(args[[10]])) {
-  as.integer(args[[10]])
+lat_min_train    <- if (length(args) >= 6 && nzchar(args[[6]])) as.numeric(args[[6]]) else -90
+lat_min_pred <- if (length(args) >= 7 && nzchar(args[[7]])) {
+  as.numeric(args[[7]])
+} else {
+  -77
+}
+
+gamma_in         <- if (length(args) >= 8 && nzchar(args[[8]])) as.numeric(args[[8]]) else 1
+cap_quant_in     <- if (length(args) >= 9 && nzchar(args[[9]])) as.numeric(args[[9]]) else 0.995
+family_mode <- if (length(args) >= 10 && nzchar(args[[10]])) args[[10]] else "gaussian_log1p"
+min_detections <- if (length(args) >= 11 && nzchar(args[[11]])) {
+  as.integer(args[[11]])
 } else {
   1L
 }
@@ -165,7 +172,8 @@ predict_one <- function(taxon,
                         discrete    = TRUE,
                         nthreads    = 1,
                         lat_min_train = -90,
-                        gamma_val   = 1.2,
+                        lat_min_pred = -90,
+                        gamma_val   = 1,
                         family_mode = "gaussian_log1p") {
 
   # Number of real positive detections for this taxon
@@ -177,7 +185,7 @@ predict_one <- function(taxon,
   if (n_detect < min_detections) {
     return(data.table(
       taxon_id = taxon,
-      latitude = seq(-90, 90, by = grid_by),
+      latitude = seq(lat_min_pred, 90, by = grid_by),
       fit = 0, lo = 0, hi = 0,
       status = "insufficient_detections",
       engine = engine,
@@ -218,7 +226,7 @@ predict_one <- function(taxon,
   if (nrow(xdt) < 5L) {
     return(data.table(
       taxon_id = taxon,
-      latitude = seq(-90, 90, by = grid_by),
+      latitude = seq(lat_min_pred, 90, by = grid_by),
       fit = 0, lo = 0, hi = 0,
       status = "insufficient_data",
       engine = engine,
@@ -244,7 +252,7 @@ predict_one <- function(taxon,
   if (n_ux < 3L) {
     return(data.table(
       taxon_id = taxon,
-      latitude = seq(-90, 90, by = grid_by),
+      latitude = seq(lat_min_pred, 90, by = grid_by),
       fit = 0, lo = 0, hi = 0,
       status = "insufficient_latitudes",
       engine = engine,
@@ -256,7 +264,7 @@ predict_one <- function(taxon,
   }
 
   # Prediction grid
-  newx <- seq(-90, 90, by = grid_by)
+  newx <- seq(lat_min_pred, 90, by = grid_by)
   fit_ok <- TRUE
 
   # Helper: fit model with chosen family; keep your existing bam/gam option for gaussian,
@@ -283,6 +291,24 @@ predict_one <- function(taxon,
   m <- try(fit_model(form, train), silent = TRUE)
   
   newd <- data.table(latitude = newx, x = newx)
+  
+  if (inherits(m, "try-error")) {
+    fit_msg <- as.character(m)
+    
+    return(data.table(
+      taxon_id = taxon,
+      latitude = seq(lat_min_pred, 90, by = grid_by),
+      fit = 0,
+      lo = 0,
+      hi = 0,
+      status = paste0("fit_failed: ", fit_msg),
+      engine = engine,
+      family_mode = family_mode,
+      k_spline = k_spline,
+      gamma = gamma_val,
+      lat_min_train = lat_min_train
+    ))
+  }
 
   if (!fit_ok) {
     return(data.table(
@@ -374,15 +400,16 @@ for (chunk_id in chunk_ids) {
                     discrete      = TRUE,
                     nthreads      = cpus,
                     lat_min_train = lat_min_train,
+                    lat_min_pred  = lat_min_pred,
                     gamma_val     = gamma_val,
                     family_mode   = family_mode),
         error = function(e) {
         message(sprintf("ERROR on %s: %s", taxon, conditionMessage(e)))
         data.table(
             taxon_id = taxon,
-            latitude = seq(-90, 90, 1),
+            latitude = seq(lat_min_pred, 90, 1),
             fit = 0, lo = 0, hi = 0,
-            status = "error",
+            status = paste0("error: ", conditionMessage(e)),
             engine = engine,
             family_mode = family_mode,
             k_spline = k_spline,

@@ -58,6 +58,7 @@ For each taxon:
 | `engine` | `gam` | GAM fitting engine (`gam` or `bam` for Gaussian models) |
 | `k_spline` | 12 | Maximum basis dimension for the latitude smooth |
 | `lat_min_train` | -90 | Southern latitude cutoff below which observed samples are excluded from fitting |
+| `lat_min_pred` | -90 | Southern latitude cutoff below which model predictions are not generated |
 | `gamma` | 1 | GAM smoothing penalty multiplier |
 | `cap_quant` | 0.995 | Quantile used to cap positive coverage values |
 | `family` | `gaussian_log1p` | Model family: `gaussian_log1p` or `tweedie` |
@@ -89,6 +90,7 @@ Rscript predict_gam.R \
   "2000" \
   "gam" \
   "12" \
+  "-90" \
   "-90" \
   "1" \
   "0.995" \
