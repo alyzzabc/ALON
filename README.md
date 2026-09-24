@@ -16,7 +16,7 @@ Stage 1 uses generalized additive models (GAMs) to estimate the latitudinal abun
 
 Note: Stage 1 can be skipped if users prefer to model per-latitude abundance independently. To run Stage 2, provide a compatible prediction table. Stage 2 was developed and tested using GAM-derived predictions.
 
-For each `taxon_id`, normalized abundance (`norm_coverage`) across samples is modeled as a function of latitude. Predictions are generated from -90° to 90° latitude at 1° intervals.
+For each `taxon_id`, normalized abundance (`norm_coverage`) across samples is modeled as a function of latitude. Predictions are generated from -90° to 90° latitude (by default) at 1° intervals.
 
 The script can run either:
 - on a SLURM high-performance computing cluster using an array job, or
@@ -45,8 +45,8 @@ For each taxon:
 2. Positive coverage values are used to calculate an abundance cap.
 3. Coverage is capped at the specified quantile (`cap_quant`; default: 0.995).
 4. For `gaussian_log1p`, capped coverage is transformed using `log1p`.
-5. A single smooth GAM is fitted across latitude.
-6. Predictions are generated from -90° to 90° at 1° intervals.
+5. A single smooth GAM is fitted across all latitudes with a valid observation.
+6. Predictions are generated from -90° to 90° (by default) at 1° intervals.
 7. Approximate 95% pointwise confidence intervals are calculated for the
    fitted curve and back-transformed to the original abundance scale.
 
