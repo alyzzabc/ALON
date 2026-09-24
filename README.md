@@ -107,7 +107,7 @@ When `SLURM_ARRAY_TAX_ID` is present, each SLURM array task processes one chunk.
 ##### Sample SLURM script:
 ```bash
 #!/bin/bash
-#SBATCH -J gam_test
+#SBATCH -J ALON_stage1
 #SBATCH -t 6:00:00
 #SBATCH -c 8
 #SBATCH --mem=50G
@@ -115,8 +115,8 @@ When `SLURM_ARRAY_TAX_ID` is present, each SLURM array task processes one chunk.
 
 module load R/4.4.1
 
-OUT=test_general_gam_predict/slurmtest_for_alsolocal
-IN=test_general_gam_predict/input_gam_euks.tsv
+OUT=path/to/output/directory
+IN=path/to/input.tsv
 CHUNK=2000
 ENGINE=gam
 K=12
