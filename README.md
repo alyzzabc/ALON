@@ -50,7 +50,7 @@ For each taxon:
 7. Approximate 95% pointwise confidence intervals are calculated for the
    fitted curve and back-transformed to the original abundance scale.
 
-### Parameters:
+### Default parameters:
 
 | Parameter | Default | Description |
 |---|---:|---|
@@ -104,6 +104,43 @@ If `SLURM_ARRAY_TAX_ID` is not detected, the script automatically runs in local 
 #### SLURM execution
 When `SLURM_ARRAY_TAX_ID` is present, each SLURM array task processes one chunk. The script also reads `SLURM_CPUS_PER_TASK` to determine the number of available CPUs.
 
+##### Sample SLURM script:
+```bash
+#!/bin/bash
+#SBATCH -J gam_test
+#SBATCH -t 6:00:00
+#SBATCH -c 8
+#SBATCH --mem=50G
+#SBATCH --array=1-3
+
+module load R/4.4.1
+
+OUT=test_general_gam_predict/slurmtest_for_alsolocal
+IN=test_general_gam_predict/input_gam_euks.tsv
+CHUNK=2000
+ENGINE=gam
+K=12
+LATMINTRAIN=-90
+LATMINPRED=-90
+GAMMA=1
+CAPQ=0.995
+FAMILY=gaussian_log1p
+MINDETECT=1
+
+Rscript predict_gam.R \
+  "$IN" \
+  "$OUT" \
+  "$CHUNK" \
+  "$ENGINE" \
+  "$K" \
+  "$LATMINTRAIN" \
+  "$LATMINPRED \
+  "$GAMMA" \
+  "$CAPQ" \
+  "$FAMILY" \
+  "$MINDETECT"
+```
+
 After each array task finishes its chunk, it checks whether all expected chunks have been generated. The final task to detect all completed chunks merges them into `predictions_all.tsv`.
 
 A merge lock prevents multiple array tasks from performing the final merge simultaneously.
@@ -143,7 +180,7 @@ Stage 2 takes taxon_id, latitude, and norm_coverage (observed abundance) and fit
 **Note in analyzing multiple size fractions:**
 During the final reconciliation step, consensus geographic assignments are derived across fractions, and exclusivity status is recalculated from the `reference_obs_input`. This is typically the richest dataset, i.e. when analyses included both all-fraction combined and cellular-fraction inputs, exclusivity was recalculated using the all-fraction observations. Reconciliation was validated for up to three size fractions which used a minimum two-fraction support rule by default For analyses with more than three fractions, users may manually adjust the rule in `reconcile_size_fractions.R`.
 
-***Optional:*** Config can be provided by the user. Default config has been validated for abundance prediction using GAM.
+### Default parameters:
 | Parameter | Default | Description |
 |---|---|---|
 |`min_support`|2|minimum number of actual detections (norm_coverage > 0) required to support a peak |
@@ -154,10 +191,10 @@ During the final reconciliation step, consensus geographic assignments are deriv
 |`subpolar_cutoff`|45|absolute latitude below at which subpolar/high latitude zones begin |
 |`polar_cutoff`|60|absolute latitude at which polar zones begin  |
 
-Latitudinal cutoffs must satisfy `tropical_cutoff` < `subpolar_cutoff` < `polar_cutoff`. By default, ALON uses 15°, 45°, and 60° absolute latitude.
+Latitudinal cutoffs must satisfy `tropical_cutoff` < `subpolar_cutoff` < `polar_cutoff`.
 
-
-Example of optional tab-separated file with columns `parameter` and `value`:
+***Optional:*** Config can be provided by the user. Default config has been validated for abundance prediction using GAM.
+Example of optional tab-separated config file with columns `parameter` and `value`:
 
 ```text
 parameter	value
