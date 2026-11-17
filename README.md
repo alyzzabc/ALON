@@ -7,16 +7,16 @@ _Alon means "wave" in Tagalog, one of the over 170 languages spoken by Filipinos
 ALON is an R-based framework designed to assign microbial biogeography using global scale -omics data. 
 We applied this framework to microbial hosts and viruses using metagenomes from the ocean. 
 
-The pipeline consists of two stages: Per-latitude abundance prediction using generalized additive models (GAMs) and classification of latitudinal distributions. The initial input requires a sample identifier, feature ID, latitude, and abundance. The final output is a tab-separated file with the feature ID, biogeographic classification, and the exclusivity status. The exclusivity status indicates whether the feature ID is found preferentially or exclusively in the assigned region. ALON can also take multiple size fractions in which case each fraction is first classified using its paired GAM prediction and raw observation files, and then integrated at the final reconciliation step.
+The pipeline consists of two stages: Per-latitude abundance fitting using generalized additive models (GAMs) and classification of latitudinal distributions. The initial input requires a sample identifier, feature ID, latitude, and abundance. The final output is a tab-separated file with the feature ID, biogeographic classification, and the exclusivity status. The exclusivity status indicates whether the feature ID is found preferentially or exclusively in the assigned region. ALON can also take multiple size fractions in which case each fraction is first classified using its paired GAM fit and raw observation files, and then integrated at the final reconciliation step.
 
 #
 
 ## Stage 1
 Stage 1 uses generalized additive models (GAMs) to estimate the latitudinal abundance distribution of individual taxa.
 
-Note: Stage 1 can be skipped if users prefer to model per-latitude abundance independently. To run Stage 2, provide a compatible prediction table. Stage 2 was developed and tested using GAM-derived predictions.
+Note: Stage 1 can be skipped if users prefer to model per-latitude abundance independently. To run Stage 2, provide a compatible fitted abundance table. Stage 2 was developed and tested using GAM-derived fits.
 
-For each `taxon_id`, normalized abundance (`norm_coverage`) across samples is modeled as a function of latitude. Predictions are generated from -90° to 90° latitude (by default) at 1° intervals.
+For each `taxon_id`, normalized abundance (`norm_coverage`) across samples is modeled as a function of latitude. Fitted values were obtained from -90° to 90° latitude (by default) at 1° intervals.
 
 The script can run either:
 - on a SLURM high-performance computing cluster using an array job, or
@@ -46,7 +46,7 @@ For each taxon:
 3. Coverage is capped at the specified quantile (`cap_quant`; default: 0.995).
 4. For `gaussian_log1p`, capped coverage is transformed using `log1p`.
 5. A single smooth GAM is fitted across all latitudes with a valid observation.
-6. Predictions are generated from -90° to 90° (by default) at 1° intervals.
+6. Fitted values are obtained from -90° to 90° (by default) at 1° intervals.
 7. Approximate 95% pointwise confidence intervals are calculated for the
    fitted curve and back-transformed to the original abundance scale.
 
@@ -58,22 +58,22 @@ For each taxon:
 | `engine` | `gam` | GAM fitting engine (`gam` or `bam` for Gaussian models) |
 | `k_spline` | 12 | Maximum basis dimension for the latitude smooth |
 | `lat_min_train` | -90 | Southern latitude cutoff below which observed samples are excluded from fitting |
-| `lat_min_pred` | -90 | Southern latitude cutoff below which model predictions are not generated |
+| `lat_min_pred` | -90 | Southern latitude cutoff below which fitted values are not generated |
 | `gamma` | 1 | GAM smoothing penalty multiplier |
 | `cap_quant` | 0.995 | Quantile used to cap positive coverage values |
 | `family` | `gaussian_log1p` | Model family: `gaussian_log1p` or `tweedie` |
 |`min_detections`| 1 | Minimum number of positive detections per taxon required for GAM fitting |
 
 ### Output files:
-1. Intermediate prediction chunks: `pred_chunk_0001.fst`, `pred_chunk_0002.fst`
-2. Final merged predictions, `predictions_all.tsv` containing the following columns:
+1. Intermediate output chunks: `pred_chunk_0001.fst`, `pred_chunk_0002.fst`
+2. Final merged output, `predictions_all.tsv` containing the following columns:
 	- `taxon_id`
 	- `latitude`
-	- `fit` - predicted abundance
+	- `fit` - fitted abundance
 	- `lo` - lower approximate 95% confidence limit
 	- `high` - upper approximate 95% confidence limit
 	- `status` - model fitting status
-3. `failed_taxa.tsv` containing a list of `taxa_id` for which a succesful GAM prediction was not obtained.
+3. `failed_taxa.tsv` containing a list of `taxa_id` for which a successful GAM fit was not obtained.
 
 Status values:
 - `ok` - model fitted succesfully
@@ -84,7 +84,7 @@ Status values:
 
 ### Usage:
 ```bash
-Rscript predict_gam.R \
+Rscript fit_gam.R \
   "path/to/input.tsv" \
   "path/to/output/directory" \
   "2000" \
@@ -127,7 +127,7 @@ CAPQ=0.995
 FAMILY=gaussian_log1p
 MINDETECT=1
 
-Rscript predict_gam.R \
+Rscript fit_gam.R \
   "$IN" \
   "$OUT" \
   "$CHUNK" \
@@ -151,7 +151,7 @@ The eukaryotic all-fraction dataset `stage_1/test_input/input_euks_small.tsv` is
 #
 
 ## Stage 2
-Stage 2 takes taxon_id, latitude, and norm_coverage (observed abundance) and fit (predicted abundance) at given latitude and classifies the latitudinal distribution of taxa. Latitudinal distribution is assigned based on the location of the tallest predicted peak/s. Classification could either be bihemispherical (polar, subpolar, subtropical, high latitude) or monohemispherical (tropical, polar N/S, subpolar N/S, subtropical N/S). Exclusivity is based on actual detection (norm_coverage > 0), e.g. a taxon classified as exclusive_polar peaks in abundance in the polar regions and is never detected outside the polar regions, and a taxon classified as preferential_polar peaks in abundance in the polar regions, but is detected in relatively lower abundance outside of the polar regions. ALON can also take multiple size fractions. See below for usage.
+Stage 2 takes taxon_id, latitude, and norm_coverage (observed abundance) and fit (fit abundance) at given latitude and classifies the latitudinal distribution of taxa. Latitudinal distribution is assigned based on the location of the tallest peak/s in the GAM curve. Classification could either be bihemispherical (polar, subpolar, subtropical, high latitude) or monohemispherical (tropical, polar N/S, subpolar N/S, subtropical N/S). Exclusivity is based on actual detection (norm_coverage > 0), e.g. a taxon classified as exclusive_polar peaks in abundance in the polar regions and is never detected outside the polar regions, and a taxon classified as preferential_polar peaks in abundance in the polar regions, but is detected in relatively lower abundance outside of the polar regions. ALON can also take multiple size fractions. See below for usage.
 
 ### Required R packages:
 - oftparse
@@ -170,7 +170,7 @@ Stage 2 takes taxon_id, latitude, and norm_coverage (observed abundance) and fit
 2. predictions_input (TSV file)
 	- `taxon_id` - taxon identifier
 	- `latitude` - sample latitude in decimal degrees
-	- `fit` (predicted norm_coverage)
+	- `fit` (fitted norm_coverage)
 
 3. reference_observation_input (TSV file, required only when providing multiple size fractions)
    - `taxon_id` - taxon identifier
